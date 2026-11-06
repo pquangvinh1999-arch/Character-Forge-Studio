@@ -1,0 +1,56 @@
+{
+  "schema": "character-forge-studio.vendor_lock.v1",
+  "generated_at": "2026-11-06T06:36:12Z",
+  "policy": "Read-only upstream vendor isolation. Never modify files inside vendor/ directly; all integration occurs through adapter packages in packages/.",
+  "fork_status": {
+    "authenticated_account": "pquangvinh1999-arch",
+    "mode": "read-only-upstream-clone",
+    "blocker": "Active GITHUB_TOKEN (ghu_*, OAuth client Iv1.ad5f73e593b03f40) is a repository-scoped GitHub Codespaces fine-grained token with empty X-OAuth-Scopes (no user-wide public_repo/fork scope), and project safety policy forbids publishing or creating remote GitHub repositories without explicit user approval.",
+    "fork_script": "scripts/prepare_github_forks.py"
+  },
+  "repositories": [
+    {
+      "name": "agent-sprite-forge",
+      "role": "Primary animation production, PixelSpec/SVG rig rendering, locality QA, and Godot 4 / Aseprite export engine",
+      "upstream_url": "https://github.com/0x0funky/agent-sprite-forge.git",
+      "target_fork_url": "https://github.com/pquangvinh1999-arch/agent-sprite-forge.git",
+      "local_path": "vendor/agent-sprite-forge",
+      "commit": "72fa5ad92d79b811acff464da32c8f3b1caa010f",
+      "commit_date": "2026-11-06 05:01:53 +0800",
+      "author": "0x0funky <webaitest13579@gmail.com>",
+      "package_version": "0.4.0",
+      "core_api_version": "1.1",
+      "license": "MIT",
+      "license_file": "vendor/agent-sprite-forge/LICENSE",
+      "notice_file": null
+    },
+    {
+      "name": "sprite-gen",
+      "role": "Selected frame extraction, curation sidecar model, breathe/recolor/shadow effects, and motion scoring utilities",
+      "upstream_url": "https://github.com/aldegad/sprite-gen.git",
+      "target_fork_url": "https://github.com/pquangvinh1999-arch/sprite-gen.git",
+      "local_path": "vendor/sprite-gen",
+      "commit": "4f5ccd55c7cf06685a41f954acc1e476b7772ece",
+      "commit_date": "2026-11-02 05:32:26 +0900",
+      "author": "darkest_alex <aldegad@gmail.com>",
+      "package_version": "3.15.0",
+      "license": "Apache-2.0",
+      "license_file": "vendor/sprite-gen/LICENSE",
+      "notice_file": "vendor/sprite-gen/NOTICE"
+    },
+    {
+      "name": "Claude-Code-Game-Studios",
+      "role": "Reference architecture for agent orchestration, asset specifications, art bible standards, and non-fabricated QA gates",
+      "upstream_url": "https://github.com/Donchitos/Claude-Code-Game-Studios.git",
+      "target_fork_url": "https://github.com/pquangvinh1999-arch/Claude-Code-Game-Studios.git",
+      "local_path": "vendor/Claude-Code-Game-Studios",
+      "commit": "05ad7c8a5b8aa2aa86bbd3439ae7cf7295cac418",
+      "commit_date": "2026-10-19 13:09:09 +1100",
+      "author": "Donchitos <150119193+Donchitos@users.noreply.github.com>",
+      "package_version": "1.2.0",
+      "license": "MIT",
+      "license_file": "vendor/Claude-Code-Game-Studios/LICENSE",
+      "notice_file": null
+    }
+  ]
+}

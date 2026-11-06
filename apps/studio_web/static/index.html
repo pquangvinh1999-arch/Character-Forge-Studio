@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Character Forge Studio — 2D/Pixel Art Production Studio</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-badge">CFS</span>
+      <div>
+        <h1>Character Forge Studio</h1>
+        <p class="subtitle">Modular 2D / Pixel Art Character Studio &bull; Godot 4 &amp; Unity Pipeline</p>
+      </div>
+    </div>
+
+    <div class="topbar-controls">
+      <label class="btn btn-primary" for="upload-input">
+        + Upload PNG / GIF
+      </label>
+      <input id="upload-input" type="file" accept=".png,.gif,image/png,image/gif" hidden />
+
+      <div class="project-picker">
+        <label for="project-select">Project:</label>
+        <select id="project-select">
+          <option value="">-- No project loaded --</option>
+        </select>
+        <button id="refresh-projects-btn" class="btn btn-secondary" title="Refresh saved projects">Reload</button>
+      </div>
+    </div>
+
+    <div class="status-pills">
+      <span id="health-pill" class="pill pill-neutral">API: Checking...</span>
+      <span id="stream-pill" class="pill pill-neutral">SSE/WS: Idle</span>
+      <span id="godot-pill" class="pill pill-neutral">Godot 4: Checking...</span>
+      <span id="budget-pill" class="pill pill-safe" title="Paid external AI APIs are disabled unless budget is explicitly configured and approved">Paid AI: Locked ($0.00)</span>
+    </div>
+  </header>
+
+  <main class="workspace-grid">
+    <!-- Left / Center Column: Viewport Canvas + Pixel HUD + Timeline -->
+    <section class="viewport-column">
+      <div class="canvas-toolbar">
+        <div class="tool-group">
+          <span class="group-label">Mode:</span>
+          <button id="mode-select-btn" class="btn btn-small btn-active" type="button">Select Region</button>
+          <button id="mode-pan-btn" class="btn btn-small" type="button">Pan Canvas</button>
+          <button id="clear-selection-btn" class="btn btn-small" type="button">Clear Selection</button>
+        </div>
+
+        <div class="tool-group">
+          <span class="group-label">Zoom:</span>
+          <button id="zoom-out-btn" class="btn btn-small" type="button">&minus;</button>
+          <select id="zoom-select">
+            <option value="0.5">0.5x</option>
+            <option value="1">1x</option>
+            <option value="2">2x</option>
+            <option value="4">4x</option>
+            <option value="8" selected>8x</option>
+            <option value="12">12x</option>
+            <option value="16">16x</option>
+            <option value="24">24x</option>
+            <option value="32">32x</option>
+          </select>
+          <button id="zoom-in-btn" class="btn btn-small" type="button">+</button>
+          <button id="zoom-fit-btn" class="btn btn-small" type="button">Reset View</button>
+        </div>
+
+        <div class="tool-group">
+          <label class="checkbox-label">
+            <input id="grid-toggle" type="checkbox" checked /> Pixel Grid
+          </label>
+          <label class="checkbox-label">
+            <input id="anchor-toggle" type="checkbox" checked /> Feet Anchor
+          </label>
+        </div>
+      </div>
+
+      <div class="canvas-stage-wrapper" id="canvas-wrapper">
+        <canvas id="sprite-canvas" width="640" height="420"></canvas>
+        <div id="empty-canvas-overlay" class="empty-overlay">
+          <div class="empty-card">
+            <h2>Upload a PNG or Animated GIF to Begin</h2>
+            <p>Original assets are preserved byte-for-byte in <code>original/</code>. Inspect frames, zoom into individual pixels, drag to select a source-pixel region, and create versioned edit jobs.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pixel-hud">
+        <div class="hud-item">
+          <span class="hud-label">Asset Size:</span>
+          <strong id="hud-dimensions">&mdash;</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Cursor Pixel (Source):</span>
+          <strong id="hud-cursor-xy">x: &mdash;, y: &mdash;</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Pixel RGBA:</span>
+          <span id="hud-color-swatch" class="color-swatch"></span>
+          <strong id="hud-pixel-rgba">&mdash;</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Selection (Source Pixels):</span>
+          <strong id="hud-selection">None (drag on canvas to select)</strong>
+        </div>
+      </div>
+
+      <!-- Timeline & Frame Inspector -->
+      <div class="timeline-panel">
+        <div class="timeline-controls">
+          <div class="playback-buttons">
+            <button id="step-prev-btn" class="btn btn-small" type="button" title="Step Backward 1 Frame">|&lt;</button>
+            <button id="play-pause-btn" class="btn btn-primary btn-small" type="button">Play</button>
+            <button id="step-next-btn" class="btn btn-small" type="button" title="Step Forward 1 Frame">&gt;|</button>
+          </div>
+
+          <div class="scrub-container">
+            <input id="timeline-scrubber" type="range" min="0" max="0" value="0" step="1" />
+            <span id="frame-counter-label" class="mono-text">Frame 0 / 0 (0 ms)</span>
+          </div>
+
+          <div class="fps-controls">
+            <label for="fps-input">FPS:</label>
+            <input id="fps-input" type="number" min="1" max="60" step="0.5" value="10" />
+            <label class="checkbox-label">
+              <input id="loop-checkbox" type="checkbox" checked /> Loop
+            </label>
+            <button id="apply-fps-btn" class="btn btn-small" type="button">Save Timing</button>
+          </div>
+        </div>
+
+        <div id="frames-strip" class="frames-strip">
+          <!-- Frame thumbnails populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Sidebar: Region Edit Jobs, Version History, Engine Exports, Live Stream -->
+    <aside class="inspector-column">
+      <!-- 1. Selection Edit Job Panel -->
+      <section class="card">
+        <div class="card-header">
+          <h2>1. Region Selection &amp; Edit Job</h2>
+          <span id="active-version-badge" class="badge">v&mdash;</span>
+        </div>
+
+        <div class="coord-inputs">
+          <label>X <input id="sel-x" type="number" min="0" value="0" /></label>
+          <label>Y <input id="sel-y" type="number" min="0" value="0" /></label>
+          <label>W <input id="sel-w" type="number" min="1" value="1" /></label>
+          <label>H <input id="sel-h" type="number" min="1" value="1" /></label>
+          <label>Frame <input id="sel-frame" type="number" min="0" value="0" readonly /></label>
+        </div>
+
+        <div class="form-row">
+          <label for="edit-instruction">Natural-Language Edit Instruction:</label>
+          <textarea id="edit-instruction" rows="2" placeholder="e.g., Tint selected visor region cyan #1abc9c (preserve all pixels outside box)"></textarea>
+        </div>
+
+        <div class="form-row inline-row">
+          <div>
+            <label for="edit-operation">Operation:</label>
+            <select id="edit-operation">
+              <option value="auto" selected>Auto (from instruction)</option>
+              <option value="tint">Tint Region (Preserve Shading)</option>
+              <option value="recolor">Recolor Region</option>
+              <option value="outline_box">Outline Selection (1px)</option>
+              <option value="brighten">Brighten Region (+45)</option>
+              <option value="darken">Darken Region (-45)</option>
+              <option value="invert">Invert Region RGB</option>
+              <option value="erase">Erase Region to Transparent</option>
+              <option value="record_only">Save JSON Job Only (Agent Queue)</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-color">Target Color:</label>
+            <input id="edit-color" type="color" value="#3498db" />
+          </div>
+        </div>
+
+        <button id="submit-job-btn" class="btn btn-primary btn-full" type="button">
+          Save &amp; Execute Selection Edit Job
+        </button>
+
+        <div class="sublist-header">Saved Edit Jobs (Click to inspect JSON):</div>
+        <div id="jobs-list" class="compact-list"></div>
+      </section>
+
+      <!-- 2. Version History & Rollback -->
+      <section class="card">
+        <div class="card-header">
+          <h2>2. Version History &amp; Rollback</h2>
+          <span id="original-hash-badge" class="badge badge-safe" title="Original uploaded file SHA-256 verified unchanged">Original: Unchanged</span>
+        </div>
+        <div id="versions-list" class="compact-list"></div>
+      </section>
+
+      <!-- 3. Engine Manifest & Godot 4 Export -->
+      <section class="card">
+        <div class="card-header">
+          <h2>3. Character Manifest &amp; Godot 4 Export</h2>
+        </div>
+        <div class="button-row">
+          <button id="export-manifest-btn" class="btn btn-secondary" type="button">
+            Build Character Manifest
+          </button>
+          <button id="export-godot-btn" class="btn btn-primary" type="button">
+            Export Godot 4 + Smoke Test
+          </button>
+        </div>
+        <pre id="inspector-json-view" class="json-viewer">Select a job or run an export to inspect structured JSON output...</pre>
+      </section>
+
+      <!-- 4. Real-Time SSE / WebSocket Event Stream -->
+      <section class="card">
+        <div class="card-header">
+          <h2>4. Live Job &amp; Event Stream (SSE / WS)</h2>
+        </div>
+        <div id="event-stream-log" class="event-log"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
